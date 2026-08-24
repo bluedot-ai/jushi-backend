@@ -1324,14 +1324,10 @@ GET /api/resources/cards
 ### 7.6 资源趋势
 
 ```http
-GET /api/resources/trend?range=24h
+GET /api/resources/trend
 ```
 
-当前状态：后端已实现。趋势查询覆盖完整时间窗，并在 MySQL 中按范围分桶：`1h` 每 1 分钟一桶（60 点）、`24h` 每 15 分钟一桶（96 点）、`7d` 每 1 小时一桶（168 点）。分配类指标取桶内最后值，使用率返回桶内平均值和最大值；空桶保留真实时间戳并返回 `null`，前端将其显示为断线。响应中的 `raw_snapshot_count` 表示窗口内原始快照数，`populated_bucket_count` 和 `data_gap_count` 可用于检查数据完整性。历史完全为空时仅用当前值填充最后一桶，不再生成伪造的水平历史曲线。
-
-性能策略：`1h` 保持实时查询；`24h` 和 `7d` 使用后端进程内缓存，分别每 15 分钟、1 小时在后台重新查询并整份覆盖旧缓存，不追加历史版本。刷新期间继续返回上一份成功缓存（stale-while-revalidate），刷新失败也保留旧缓存。进程刚启动且缓存尚未生成时，接口快速返回 `cache_ready=false`、`cache_status=warming`、空 `items` 和 `retry_after_seconds`，前端应在后台重试，不能同步触发长查询阻塞页面。
-
-缓存相关响应字段：`cache_hit`、`cache_ready`、`cache_status`、`cache_generated_at`、`cache_age_seconds`、`cache_refresh_seconds`、`cache_refreshing`、`cache_last_error`。该缓存是单进程内存缓存，容器重启后会重新预热；当前部署为单个 `python app.py` 进程，适用于现有运行方式。
+当前状态：后端已实现。当前从 `resource_snapshot` 历史快照读取趋势；如果历史不足，会基于当前资源快照返回兜底趋势数据。
 
 ### 7.7 资源推荐策略
 
@@ -1340,26 +1336,6 @@ GET /api/resources/recommendation
 ```
 
 当前状态：后端已实现。根据当前 GPU、vGPU、显存、算力和节点压力返回资源使用建议。
-
-### 7.8 节点物理加速卡实时明细
-
-```http
-GET /api/resources/nodes/{node_name}/gpus
-```
-
-当前状态：后端已实现。仅允许查询 Ready、可调度节点；根据 Prometheus 的 NVIDIA `UUID` 或 Ascend `vdie_id` 动态返回真实物理卡数量、计算利用率、显存已用量/总量和显存利用率。本期未启用 GPU 虚拟化，因此不返回 vGPU 指标，也不推断单张物理卡的分配状态。
-
-### 7.9 节点物理加速卡趋势
-
-```http
-GET /api/resources/nodes/{node_name}/gpu-trend?metric=memory_utilization&range=1h
-```
-
-当前客户页面只支持 `memory_utilization`（显存已用量/总量），`range` 支持 `1h`、`24h`、`7d`。现有 `jushi-api` 后台线程每 60 秒从 Prometheus 批量采集所有节点的物理卡显存 used/total，并写入 MySQL `accelerator_metric_sample`；右侧单卡实时明细仍直接查询 Prometheus。
-
-趋势接口统一从 MySQL 查询：`1h` 每分钟一桶（60 点）、`24h` 每 15 分钟一桶（96 点）、`7d` 每小时一桶（168 点）。桶内 `points` 使用平均显存利用率，`max_points` 保留最大值，`sample_counts` 返回有效样本数。没有采样的桶返回 `null`，前端显示为断线，不补 0。
-
-响应中的 `expected_bucket_count`、`populated_bucket_count`、`raw_sample_count`、`actual_start_timestamp`、`actual_end_timestamp` 和 `history_complete` 用于判断历史覆盖情况。首次部署最多尝试从 Prometheus 补采最近 90 分钟，不能恢复的升级前历史保持为空。
 
 ## 8. Pod 运维接口
 
@@ -1757,7 +1733,7 @@ POST /api/alerts/reopen
 GET /api/logs/operations
 ```
 
-当前状态：后端已实现。查询 `operation_log` 表，部署类接口会通过 Flask `after_request` 中间件自动写入操作日志。列表按 `created_at DESC, id DESC` 返回最新记录，默认每页 100 条。
+当前状态：后端已实现。查询 `operation_log` 表，部署类接口会通过 Flask `after_request` 中间件自动写入操作日志。
 
 查询参数：
 
@@ -1765,11 +1741,9 @@ GET /api/logs/operations
 | --- | --- | --- | --- |
 | `operator` | string | 否 | 操作人 |
 | `operation_type` | string | 否 | 操作类型 |
-| `keyword` | string | 否 | 操作对象或错误信息关键词 |
-| `operation_result` | string | 否 | `success` 或 `failure` |
-| `time_range` | string | 否 | `1h`、`1d`、`7d`、`30d`、`all` |
+| `keyword` | string | 否 | 关键词 |
 | `page` | number | 否 | 页码 |
-| `page_size` | number | 否 | 每页数量，默认和最大值均为 100 |
+| `page_size` | number | 否 | 每页数量 |
 
 响应：
 
@@ -1784,10 +1758,7 @@ GET /api/logs/operations
       "is_success": true,
       "created_at": "2026-05-21 15:30:00"
     }
-  ],
-  "total": 1,
-  "page": 1,
-  "page_size": 100
+  ]
 }
 ```
 
@@ -1842,7 +1813,7 @@ GET /api/logs/pod
 POST /api/audits/list
 ```
 
-当前状态：后端已实现。查询 `operation_log` 并按审计 envelope 返回，支持 `operator`、`operation_type`、`keyword`、`operation_result`、`time_range` 和分页筛选，结果按最新时间倒序。
+当前状态：后端已实现。查询 `operation_log` 并按审计 envelope 返回，支持 `operator`、`operation_type`、`keyword`、分页等筛选。
 
 请求：
 
@@ -1852,12 +1823,12 @@ POST /api/audits/list
   "serial": "serial-001",
   "context": "list audits",
   "content": {
-    "operation_result": "success",
+    "result": "all",
     "operator": "admin",
     "time_range": "7d",
     "keyword": "vGPU",
     "page": 1,
-    "page_size": 100
+    "page_size": 20
   }
 }
 ```
@@ -1914,7 +1885,7 @@ Content-Type: multipart/form-data
 POST /api/audits/export
 ```
 
-当前状态：后端已实现。按筛选条件导出 `operation_log`，`content.time_range` 支持 `1h`、`1d`、`7d`、`30d`、`all`。`content.format = json` 时返回 JSON 文件，`content.format = excel` 时返回 Excel xlsx 文件。
+当前状态：后端已实现。按筛选条件导出 `operation_log`，`content.format = json` 时返回 JSON 文件，`content.format = excel` 时返回 Excel xlsx 文件。
 
 请求：
 
@@ -1925,8 +1896,6 @@ POST /api/audits/export
   "context": "export audits",
   "content": {
     "format": "excel",
-    "time_range": "7d",
-    "operation_result": "success",
     "operator": "admin",
     "operation_type": "create",
     "keyword": "nvidia"
@@ -1936,50 +1905,7 @@ POST /api/audits/export
 
 响应：
 
-返回文件流。`format = json` 时响应 `Content-Type: application/json`；`format = excel` 时响应 `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`。文件名统一为 `YYYYMMDD_审计日志_导出范围`，例如 `20260723_审计日志_7d.xlsx`。
-
-### 10.7 六类部署接口调用统计
-
-```http
-GET /api/audits/call-statistics?time_range=7d
-Authorization: Bearer <login_token>
-```
-
-当前状态：后端已实现。基于 `operation_log` 聚合自动审计覆盖的六类部署接口，`time_range` 支持 `1h`、`1d`、`7d`、`30d`、`all`，缺省值为 `1h`。统计总调用数，并分别返回成功和失败数量；所选时间范围内没有记录的接口仍会返回，数量为 0。`all` 的 `start_at` 为 `null`。
-
-响应：
-
-```json
-{
-  "is_success": true,
-  "time_range": "7d",
-  "start_at": "2026-07-16 15:00:00",
-  "end_at": "2026-07-23 15:00:00",
-  "total_calls": 38,
-  "success_count": 35,
-  "failure_count": 3,
-  "items": [
-    {
-      "operation_type": "check_available",
-      "method": "POST",
-      "path": "/api/deploy/check-available",
-      "total_calls": 12,
-      "success_count": 11,
-      "failure_count": 1
-    },
-    {
-      "operation_type": "create",
-      "method": "POST",
-      "path": "/api/deploy/create-default",
-      "total_calls": 5,
-      "success_count": 4,
-      "failure_count": 1
-    }
-  ]
-}
-```
-
-`items` 固定按 `check_available`、`create`、`retrieve`、`release`、`reset`、`list` 返回。非法 `time_range` 返回 HTTP 400。
+返回文件流。`format = json` 时响应 `Content-Type: application/json`，文件名 `audit_logs.json`；`format = excel` 时响应 `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`，文件名 `audit_logs.xlsx`。
 
 ## 11. 前后端字段对齐说明
 
@@ -2141,7 +2067,6 @@ GET  /api/logs/instance
 GET  /api/logs/pod
 POST /api/audits/list
 POST /api/audits/export
-GET  /api/audits/call-statistics
 ```
 
 其中已接入真实 MySQL 或 PaaS 能力的接口：
@@ -2192,7 +2117,6 @@ GET  /api/logs/instance
 GET  /api/logs/pod
 POST /api/audits/list
 POST /api/audits/export
-GET  /api/audits/call-statistics
 ```
 
 后续业务增强或暂缓接口：

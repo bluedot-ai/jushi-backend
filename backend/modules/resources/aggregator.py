@@ -256,3 +256,4 @@ def _resource_summary_cards(allocatable, allocated):
             "vgpu_per_gpu": _vgpu_per_gpu(),
         },
     }
+

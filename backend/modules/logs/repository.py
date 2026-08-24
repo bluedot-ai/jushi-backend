@@ -379,3 +379,4 @@ def _fmt_val(val):
     if isinstance(val, datetime):
         return val.strftime("%Y-%m-%d %H:%M:%S")
     return val
+

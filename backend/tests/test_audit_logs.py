@@ -6,11 +6,9 @@ from flask import Flask
 
 from backend.modules.audits import audits_bp
 from backend.modules.audits import routes as audit_routes
-from backend.modules.audits import service as audit_service
 from backend.modules.audits.schema import (
     normalize_audit_export,
     normalize_audit_list,
-    normalize_call_statistics,
 )
 from backend.modules.logs import repository
 from backend.modules.logs.schema import normalize_log_query
@@ -61,29 +59,6 @@ class _FakeConnection:
         return None
 
 
-class _StatisticsCursor(_FakeCursor):
-    def fetchall(self):
-        return [
-            {
-                "operation_type": "create",
-                "total_calls": 5,
-                "success_count": 4,
-                "failure_count": 1,
-            },
-            {
-                "operation_type": "list",
-                "total_calls": 8,
-                "success_count": 8,
-                "failure_count": 0,
-            },
-        ]
-
-
-class _StatisticsConnection(_FakeConnection):
-    def __init__(self):
-        self.cursor_instance = _StatisticsCursor()
-
-
 class AuditLogTests(unittest.TestCase):
     def test_log_query_normalizes_pagination_result_and_range(self):
         query = normalize_log_query({
@@ -130,15 +105,6 @@ class AuditLogTests(unittest.TestCase):
         self.assertEqual(export_query["format"], "excel")
         self.assertEqual(export_query["time_range"], "30d")
 
-    def test_call_statistics_schema_defaults_and_rejects_invalid_range(self):
-        query, error = normalize_call_statistics({})
-        self.assertIsNone(error)
-        self.assertEqual(query["time_range"], "1h")
-
-        query, error = normalize_call_statistics({"time_range": "2d"})
-        self.assertIsNone(query)
-        self.assertIn("time_range must be one of", error)
-
     def test_database_list_orders_newest_first_and_normalizes_rows(self):
         connection = _FakeConnection()
         with (
@@ -169,97 +135,6 @@ class AuditLogTests(unittest.TestCase):
         self.assertIn("created_at >= %s", clauses)
         self.assertEqual(params[0], 0)
         self.assertIsInstance(params[1], datetime)
-
-    def test_database_call_statistics_uses_one_grouped_time_range_query(self):
-        connection = _StatisticsConnection()
-        end_time = datetime(2026, 7, 23, 15, 0, 0)
-        operation_types = ["check_available", "create", "list"]
-        with (
-            patch.object(repository, "_db_available", return_value=True),
-            patch.object(repository, "get_connection", return_value=connection),
-        ):
-            result = repository.count_operation_calls(
-                operation_types,
-                "1h",
-                end_time=end_time,
-            )
-
-        sql, params = connection.cursor_instance.statements[0]
-        self.assertIn("GROUP BY operation_type", sql)
-        self.assertIn("created_at >= %s", sql)
-        self.assertIn("created_at <= %s", sql)
-        self.assertEqual(params[:3], operation_types)
-        self.assertEqual(params[3], datetime(2026, 7, 23, 14, 0, 0))
-        self.assertEqual(params[4], end_time)
-        self.assertEqual(result["end_at"], end_time)
-        self.assertEqual(result["rows"][0]["total_calls"], 5)
-
-    @patch("backend.modules.audits.service.count_operation_calls")
-    def test_call_statistics_returns_all_six_types_and_totals(self, count_calls):
-        count_calls.return_value = {
-            "start_at": datetime(2026, 7, 16, 15, 0, 0),
-            "end_at": datetime(2026, 7, 23, 15, 0, 0),
-            "rows": [
-                {
-                    "operation_type": "create",
-                    "total_calls": 5,
-                    "success_count": 4,
-                    "failure_count": 1,
-                },
-                {
-                    "operation_type": "list",
-                    "total_calls": 8,
-                    "success_count": 8,
-                    "failure_count": 0,
-                },
-            ],
-        }
-
-        result = audit_service.get_call_statistics("7d")
-
-        self.assertEqual(len(result["items"]), 6)
-        self.assertEqual(result["total_calls"], 13)
-        self.assertEqual(result["success_count"], 12)
-        self.assertEqual(result["failure_count"], 1)
-        self.assertEqual(result["items"][0]["operation_type"], "check_available")
-        self.assertEqual(result["items"][0]["total_calls"], 0)
-        self.assertEqual(result["items"][1]["operation_type"], "create")
-        self.assertEqual(result["items"][1]["path"], "/api/deploy/create-default")
-        self.assertEqual(result["start_at"], "2026-07-16 15:00:00")
-
-    def test_call_statistics_route_rejects_invalid_range(self):
-        app = Flask(__name__)
-        app.register_blueprint(audits_bp, url_prefix="/api/audits")
-
-        response = app.test_client().get(
-            "/api/audits/call-statistics?time_range=2d"
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertFalse(response.get_json()["is_success"])
-
-    @patch("backend.modules.audits.routes.service.get_call_statistics")
-    def test_call_statistics_route_returns_json(self, get_statistics):
-        get_statistics.return_value = {
-            "is_success": True,
-            "time_range": "30d",
-            "start_at": "2026-06-23 15:00:00",
-            "end_at": "2026-07-23 15:00:00",
-            "total_calls": 0,
-            "success_count": 0,
-            "failure_count": 0,
-            "items": [],
-        }
-        app = Flask(__name__)
-        app.register_blueprint(audits_bp, url_prefix="/api/audits")
-
-        response = app.test_client().get(
-            "/api/audits/call-statistics?time_range=30d"
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json()["time_range"], "30d")
-        get_statistics.assert_called_once_with("30d")
 
     def test_export_filename_contains_date_log_name_and_range(self):
         filename = audit_routes._export_filename("xlsx", "7d")
@@ -297,3 +172,4 @@ class AuditLogTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

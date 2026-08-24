@@ -122,3 +122,4 @@ def pod_logs(query: dict) -> dict:
     except ModuleNotFoundError:
         from modules.pods.service import pod_logs as _pods_pod_logs
     return _pods_pod_logs(query)
+

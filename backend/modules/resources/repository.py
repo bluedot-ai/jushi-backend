@@ -296,3 +296,4 @@ def _load_resource_trend_buckets(snapshot_type, start_time, end_time, bucket_sec
         "actual_end_at": _to_datetime(rows[0].get("actual_end_at")),
         "error": None,
     }
+

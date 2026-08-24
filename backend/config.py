@@ -19,6 +19,12 @@ class Config:
     K8S_API_BASE = os.getenv("K8S_API_BASE", "")
     K8S_TOKEN = (os.getenv("K8S_TOKEN") or "").strip('"')
 
+    ALGORITHM_ARCH = (os.getenv("ALGORITHM_ARCH") or "auto").strip().lower()
+    ALGORITHM_VERSION_BASE_DIR = os.getenv(
+        "ALGORITHM_VERSION_BASE_DIR",
+        "/mnt/jushi-algorithm",
+    )
+
     PROMETHEUS_BASE_URL = os.getenv("PROMETHEUS_BASE_URL", "")
     PROMETHEUS_TOKEN = (os.getenv("PROMETHEUS_TOKEN") or "").strip('"')
     PROMETHEUS_TIMEOUT_SECONDS = int(os.getenv("PROMETHEUS_TIMEOUT_SECONDS", "5"))
@@ -26,3 +32,4 @@ class Config:
     # 老版本部署脚本通过内部接口上报六类部署操作。密钥为空时接口保持关闭。
     AUDIT_INGEST_KEY = (os.getenv("AUDIT_INGEST_KEY") or "").strip()
     AUDIT_INGEST_MAX_BYTES = int(os.getenv("AUDIT_INGEST_MAX_BYTES", "262144"))
+

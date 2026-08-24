@@ -63,3 +63,4 @@ def trend():
 def recommendation():
     # 首页资源推荐策略：根据节点资源分配率给出推荐节点和风险提示，不直接参与调度。
     return jsonify(service.recommendation(normalize_resource_query(request.args)))
+

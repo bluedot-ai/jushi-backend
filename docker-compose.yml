@@ -19,6 +19,7 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - /workspace/Alg:/mnt/jushi-algorithm:ro
     depends_on:
       jushi-mysql:
         condition: service_healthy

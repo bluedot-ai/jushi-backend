@@ -147,3 +147,4 @@ def _export_excel(records: list, query: dict):
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers=_download_headers(filename),
     )
+

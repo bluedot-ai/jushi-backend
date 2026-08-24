@@ -7,6 +7,59 @@ SYSTEM_PATHS = {
             "responses": {"200": {"description": "服务正常"}},
         }
     },
+    "/api/system/algorithm-version": {
+        "get": {
+            "tags": ["System"],
+            "summary": "查询宿主机算法版本",
+            "description": (
+                "根据服务端 ARM/x86 配置读取宿主机只读挂载算法目录中 "
+                "version_<版本号> 文件的文件名。该接口需要登录。"
+            ),
+            "responses": {
+                "200": {
+                    "description": "版本查询结果；版本缺失或目录不可用时通过 status 区分",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "is_success": {"type": "boolean"},
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ok",
+                                            "not_found",
+                                            "conflict",
+                                            "unavailable",
+                                            "unsupported_arch",
+                                        ],
+                                    },
+                                    "version": {
+                                        "type": "string",
+                                        "nullable": True,
+                                    },
+                                    "arch": {
+                                        "type": "string",
+                                        "nullable": True,
+                                        "enum": ["arm", "x86"],
+                                    },
+                                    "msg": {"type": "string"},
+                                },
+                            },
+                            "example": {
+                                "is_success": True,
+                                "status": "ok",
+                                "version": "1.0.41.4",
+                                "arch": "x86",
+                                "msg": "算法版本读取成功",
+                            },
+                        }
+                    },
+                },
+                "401": {"description": "未登录"},
+            },
+        }
+    },
     "/api/system/logo": {
         "get": {
             "tags": ["System"],
@@ -113,3 +166,4 @@ SYSTEM_PATHS = {
         }
     },
 }
+

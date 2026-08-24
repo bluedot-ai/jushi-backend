@@ -3,6 +3,7 @@ import os
 from flask import Blueprint, g, jsonify, request
 
 from . import service
+from .algorithm_version import get_algorithm_version
 from .schema import LOGO_MAX_SIZE_BYTES, validate_logo_file
 
 system_bp = Blueprint("system", __name__)
@@ -12,6 +13,12 @@ system_bp = Blueprint("system", __name__)
 def health():
     """健康检查接口，供本地调试、Docker Compose 和部署探针使用。"""
     return jsonify({"status": "ok"})
+
+
+@system_bp.get("/algorithm-version")
+def algorithm_version():
+    """读取宿主机算法目录中的版本标识文件名。"""
+    return jsonify(get_algorithm_version())
 
 
 @system_bp.get("/logo")
@@ -135,3 +142,4 @@ def _lookup_user(username: str) -> dict | None:
     except ModuleNotFoundError:
         from modules.auth.repository import find_user_by_username
     return find_user_by_username(username)
+

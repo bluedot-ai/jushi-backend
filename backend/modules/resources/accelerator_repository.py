@@ -189,3 +189,4 @@ def cleanup_accelerator_samples(retention_days, batch_size=10000):
     finally:
         if conn is not None:
             conn.close()
+

@@ -29,3 +29,4 @@ docker exec "$MYSQL_CONTAINER" sh -c '
 '
 
 echo "Accelerator history migration completed."
+

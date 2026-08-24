@@ -96,3 +96,4 @@ def recommendation(query):
         "metric_source": METRIC_SOURCE,
         "usage_metric_ready": False,
     })
+

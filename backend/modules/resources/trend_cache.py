@@ -212,3 +212,4 @@ def start_resource_trend_cache_refresher(builder):
         thread.start()
         _refresher_started = True
         return True
+

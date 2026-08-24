@@ -59,3 +59,4 @@ class PrometheusClient:
 
         result = ((payload.get("data") or {}).get("result") or [])
         return result if isinstance(result, list) else [], None
+

@@ -56,3 +56,4 @@ def ingest_audit_event():
         "is_success": True,
         "duplicate": duplicate,
     }), 200 if duplicate else 201
+

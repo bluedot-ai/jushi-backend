@@ -1,5 +1,4 @@
 import unittest
-from datetime import datetime
 from unittest.mock import patch
 
 from backend.modules.resources import node_gpu, service
@@ -9,7 +8,14 @@ def _instant_row(labels, value):
     return {"metric": labels, "value": [100, str(value)]}
 
 
+def _matrix_row(labels, values):
+    return {"metric": labels, "values": [[timestamp, str(value)] for timestamp, value in values]}
+
+
 class _FakeClient:
+    def __init__(self):
+        self.range_calls = []
+
     def query(self, promql):
         nvidia = {
             "node": "worker-1",
@@ -39,6 +45,19 @@ class _FakeClient:
             return [_instant_row(ascend, 10)], None
         return [], None
 
+    def query_range(self, promql, start, end, step):
+        self.range_calls.append((promql, start, end, step))
+        if "DCGM" in promql:
+            return [_matrix_row({
+                "node": "worker-1",
+                "UUID": "gpu-a",
+                "gpu": "0",
+                "device": "nvidia0",
+                "modelName": "NVIDIA Test",
+            }, [(end - step, 5), (end, 20)])], None
+        return [], None
+
+
 class NodeGpuTests(unittest.TestCase):
     def test_node_name_validation_rejects_promql_injection(self):
         value, error = node_gpu.validate_node_name('worker-1"} or up')
@@ -61,32 +80,12 @@ class NodeGpuTests(unittest.TestCase):
         self.assertEqual(payload["items"][1]["memory_utilization_percent"], 50.0)
         self.assertIsNone(payload["items"][1]["physical_gpu_allocated"])
 
-    def test_trend_uses_mysql_buckets_and_preserves_empty_buckets(self):
-        bucket_result = {
-            "items": [{
-                "vendor": "nvidia",
-                "card_id": "gpu-a",
-                "device_index": 0,
-                "device_name": "nvidia0",
-                "model_name": "NVIDIA Test",
-                "bucket_no": 95,
-                "utilization_avg": 5,
-                "utilization_max": 20,
-                "sample_count": 4,
-            }],
-            "raw_sample_count": 4,
-            "actual_start_at": datetime.fromtimestamp(99900),
-            "actual_end_at": datetime.fromtimestamp(99960),
-            "error": None,
-        }
-        with patch.object(
-            node_gpu,
-            "load_accelerator_trend_buckets",
-            return_value=bucket_result,
-        ):
+    def test_trend_preserves_real_time_positions_without_backfill(self):
+        client = _FakeClient()
+        with patch.object(node_gpu, "_client", return_value=(client, None)):
             payload = node_gpu.node_gpu_trend(
                 "worker-1",
-                "memory_utilization",
+                "gpu_utilization",
                 "24h",
                 {"node_name": "worker-1"},
                 now_seconds=100000,
@@ -95,14 +94,12 @@ class NodeGpuTests(unittest.TestCase):
         self.assertTrue(payload["is_success"])
         self.assertEqual(payload["start_timestamp"], (100000 - 86400) * 1000)
         self.assertEqual(payload["end_timestamp"], 100000 * 1000)
-        self.assertEqual(payload["step_seconds"], 900)
-        self.assertEqual(len(payload["series"][0]["points"]), 96)
-        self.assertIsNone(payload["series"][0]["points"][0][1])
-        self.assertEqual(payload["series"][0]["points"][-1][1], 5.0)
-        self.assertEqual(payload["series"][0]["max_points"][-1][1], 20.0)
-        self.assertEqual(payload["raw_sample_count"], 4)
-        self.assertEqual(payload["metric_source"], "mysql_accelerator_history")
-        self.assertFalse(payload["history_complete"])
+        self.assertEqual(payload["step_seconds"], 300)
+        self.assertEqual(payload["series"][0]["points"], [
+            [(100000 - 300) * 1000, 5.0],
+            [100000 * 1000, 20.0],
+        ])
+        self.assertEqual(client.range_calls[0][3], 300)
 
     def test_not_ready_node_is_rejected_before_prometheus_query(self):
         with patch.object(service, "nodes", return_value={
@@ -117,7 +114,7 @@ class NodeGpuTests(unittest.TestCase):
     def test_invalid_trend_metric_returns_clear_error(self):
         payload = node_gpu.node_gpu_trend(
             "worker-1",
-            "gpu_utilization",
+            "vgpu_utilization",
             "1h",
             {"node_name": "worker-1"},
         )
@@ -128,3 +125,4 @@ class NodeGpuTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

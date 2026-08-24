@@ -49,3 +49,4 @@ UNKNOWN_GPU_MODEL = "Unknown"
 METRIC_SOURCE = "paas_cluster_resourceSummary + k8s_node_label + cluster_pod_resource_fallback"
 PROMETHEUS_METRIC_SOURCE = "prometheus_gpu_memory_usage"
 
+

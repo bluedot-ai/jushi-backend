@@ -121,3 +121,4 @@ def normalize_legacy_audit_event(payload):
 def _bounded_text(value, maximum, default=""):
     normalized = str(value or default).strip()
     return normalized[:maximum]
+

@@ -6,3 +6,4 @@ DEPLOY_OPERATION_PATHS = {
     "/api/deploy/reset": "reset",
     "/api/deploy/list": "list",
 }
+

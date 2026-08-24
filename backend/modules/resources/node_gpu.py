@@ -367,3 +367,4 @@ def node_gpu_trend(node_name, metric, range_key, node, now_seconds=None):
         "history_complete": history_complete,
         "diagnostics": {"history_error": None},
     })
+

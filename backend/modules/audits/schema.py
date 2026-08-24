@@ -45,3 +45,4 @@ def normalize_call_statistics(args):
         allowed = ", ".join(("1h", "1d", "7d", "30d", "all"))
         return None, f"time_range must be one of: {allowed}"
     return {"time_range": time_range}, None
+

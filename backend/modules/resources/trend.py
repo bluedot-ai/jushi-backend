@@ -312,3 +312,4 @@ def trend(query):
         "cache_last_error": False,
     })
     return result
+

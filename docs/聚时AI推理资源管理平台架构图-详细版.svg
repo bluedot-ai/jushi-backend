@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="1800" viewBox="0 0 3200 1800">
+  <defs>
+    <style>
+      text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill:#202124; }
+      .title { font-size:54px; font-weight:700; fill:#2167d5; }
+      .subtitle { font-size:22px; fill:#5f6368; }
+      .section { fill:#fff; stroke:#8a8a8a; stroke-width:2.5; stroke-dasharray:10 8; rx:14; }
+      .st { font-size:28px; font-weight:700; }
+      .card { fill:#fff; stroke-width:2.5; rx:12; }
+      .ct { font-size:22px; font-weight:600; text-anchor:middle; }
+      .cs { font-size:17px; fill:#4f5358; text-anchor:middle; }
+      .label { font-size:20px; font-weight:600; }
+      .small { font-size:16px; fill:#555; }
+      .chip { fill:#fff; stroke-width:2; rx:9; }
+      .chipText { font-size:18px; text-anchor:middle; }
+      .arrow { fill:none; stroke:#171717; stroke-width:3; marker-end:url(#arrow); }
+      .bus { fill:none; stroke:#171717; stroke-width:3; }
+      .blue { stroke:#3478db; }
+      .green { stroke:#2f9b61; }
+      .orange { stroke:#e06b22; }
+      .purple { stroke:#7a48c4; }
+      .cyan { stroke:#0c9fb8; }
+      .red { stroke:#d94b47; }
+      .blueText { fill:#2167d5; }
+      .greenText { fill:#19874b; }
+      .orangeText { fill:#d55a16; }
+      .purpleText { fill:#6734b1; }
+      .cyanText { fill:#087f98; }
+      .redText { fill:#c43d39; }
+      .iconText { font-size:18px; font-weight:700; text-anchor:middle; dominant-baseline:middle; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#171717"/>
+    </marker>
+  </defs>
+
+  <rect width="3200" height="1800" fill="#fff"/>
+  <text x="1600" y="74" text-anchor="middle" class="title">聚时 AI 推理资源管理平台总体架构图（详细版）</text>
+  <text x="1600" y="110" text-anchor="middle" class="subtitle">基于当前真实工程：Vue 3 管理端 · Nginx · Flask API · MySQL · PaaS平台 · Kubernetes · Prometheus</text>
+
+  <!-- 第一层：访问与前端 -->
+  <rect x="45" y="145" width="440" height="285" class="section"/>
+  <text x="265" y="184" text-anchor="middle" class="st blueText">用户访问</text>
+  <rect x="75" y="210" width="175" height="82" class="card blue"/><circle cx="112" cy="251" r="20" fill="none" stroke="#3478db" stroke-width="3"/><path d="M82 283 Q112 253 142 283" fill="none" stroke="#3478db" stroke-width="3"/><text x="177" y="247" class="label">管理员</text><text x="177" y="273" class="small">系统配置 / 用户</text>
+  <rect x="277" y="210" width="175" height="82" class="card blue"/><circle cx="314" cy="251" r="20" fill="none" stroke="#3478db" stroke-width="3"/><path d="M284 283 Q314 253 344 283" fill="none" stroke="#3478db" stroke-width="3"/><text x="379" y="247" class="label">运维人员</text><text x="379" y="273" class="small">实例 / 资源 / 告警</text>
+  <rect x="75" y="316" width="377" height="82" class="card blue"/><rect x="98" y="337" width="52" height="38" rx="4" fill="none" stroke="#3478db" stroke-width="3"/><line x1="108" y1="385" x2="140" y2="385" stroke="#3478db" stroke-width="3"/><text x="177" y="351" class="label">业务用户 / 浏览器</text><text x="177" y="378" class="small">首页、资源、实例、告警查询与操作</text>
+
+  <rect x="545" y="145" width="1170" height="285" class="section"/>
+  <text x="1130" y="184" text-anchor="middle" class="st blueText">Vue 3 管理控制台</text>
+  <g>
+    <rect x="575" y="210" width="170" height="78" class="card blue"/><text x="660" y="244" class="ct">首页总览</text><text x="660" y="271" class="cs">资源 / 实例 / 告警</text>
+    <rect x="765" y="210" width="170" height="78" class="card blue"/><text x="850" y="244" class="ct">资源中心</text><text x="850" y="271" class="cs">容量 / 分配 / 趋势</text>
+    <rect x="955" y="210" width="170" height="78" class="card blue"/><text x="1040" y="244" class="ct">实例中心</text><text x="1040" y="271" class="cs">创建 / 运维 / 回收</text>
+    <rect x="1145" y="210" width="170" height="78" class="card blue"/><text x="1230" y="244" class="ct">端口避让</text><text x="1230" y="271" class="cs">规则 / 冲突规避</text>
+    <rect x="1335" y="210" width="170" height="78" class="card blue"/><text x="1420" y="244" class="ct">告警中心</text><text x="1420" y="271" class="cs">实时 / 历史 / 处理</text>
+    <rect x="1525" y="210" width="160" height="78" class="card blue"/><text x="1605" y="244" class="ct">审计日志</text><text x="1605" y="271" class="cs">筛选 / Excel导出</text>
+    <rect x="575" y="315" width="260" height="78" class="card cyan"/><text x="705" y="349" class="ct">创建实例向导</text><text x="705" y="376" class="cs">资源配置 → 预检 → 创建</text>
+    <rect x="855" y="315" width="260" height="78" class="card cyan"/><text x="985" y="349" class="ct">实例操作面板</text><text x="985" y="376" class="cs">详情 / 停止 / 重启 / 释放</text>
+    <rect x="1135" y="315" width="260" height="78" class="card cyan"/><text x="1265" y="349" class="ct">节点与显卡趋势</text><text x="1265" y="376" class="cs">Top5 / 单卡历史 / 推荐</text>
+    <rect x="1415" y="315" width="270" height="78" class="card cyan"/><text x="1550" y="349" class="ct">Bearer Token 会话</text><text x="1550" y="376" class="cs">登录态 / 角色 / 请求封装</text>
+  </g>
+
+  <rect x="1775" y="145" width="370" height="285" class="section"/>
+  <text x="1960" y="184" text-anchor="middle" class="st orangeText">统一接入</text>
+  <rect x="1810" y="210" width="300" height="76" class="card orange"/><text x="1960" y="243" class="ct">Nginx 静态服务</text><text x="1960" y="270" class="cs">前端资源 / API 反向代理</text>
+  <rect x="1810" y="312" width="300" height="76" class="card orange"/><text x="1960" y="345" class="ct">统一鉴权拦截</text><text x="1960" y="372" class="cs">Authorization: Bearer Token</text>
+
+  <rect x="2205" y="145" width="950" height="285" class="section"/>
+  <text x="2680" y="184" text-anchor="middle" class="st greenText">Flask API 服务入口</text>
+  <rect x="2235" y="210" width="265" height="78" class="card green"/><circle cx="2276" cy="249" r="22" fill="none" stroke="#2f9b61" stroke-width="3"/><text x="2276" y="250" class="iconText greenText">API</text><text x="2385" y="242" class="ct">应用工厂</text><text x="2385" y="269" class="cs">蓝图注册 / CORS</text>
+  <rect x="2520" y="210" width="285" height="78" class="card green"/><text x="2662" y="242" class="ct">请求前置处理</text><text x="2662" y="269" class="cs">Token解析 / 用户状态校验</text>
+  <rect x="2825" y="210" width="300" height="78" class="card green"/><text x="2975" y="242" class="ct">统一响应与异常</text><text x="2975" y="269" class="cs">REST / 部署 Envelope</text>
+  <rect x="2235" y="315" width="265" height="78" class="card green"/><text x="2367" y="347" class="ct">操作日志中间件</text><text x="2367" y="374" class="cs">关键部署动作自动留痕</text>
+  <rect x="2520" y="315" width="285" height="78" class="card green"/><text x="2662" y="347" class="ct">OpenAPI / Swagger</text><text x="2662" y="374" class="cs">接口契约 / 示例 / 调试</text>
+  <rect x="2825" y="315" width="300" height="78" class="card green"/><text x="2975" y="347" class="ct">系统能力</text><text x="2975" y="374" class="cs">健康检查 / Logo / 算法版本</text>
+
+  <path d="M485 288 H535" class="arrow"/><path d="M1715 288 H1765" class="arrow"/><path d="M2145 288 H2195" class="arrow"/>
+
+  <!-- 第二层：真实业务域 -->
+  <rect x="45" y="480" width="3110" height="585" class="section"/>
+  <text x="1600" y="525" text-anchor="middle" class="st greenText">聚时平台核心业务域（Flask 单体模块化服务）</text>
+
+  <!-- 六个域 -->
+  <rect x="75" y="560" width="475" height="455" class="section"/>
+  <text x="312" y="600" text-anchor="middle" class="st greenText">认证与用户</text>
+  <rect x="100" y="625" width="200" height="74" class="card green"/><text x="200" y="656" class="ct">登录认证</text><text x="200" y="682" class="cs">登录 / 登出 / 当前用户</text>
+  <rect x="325" y="625" width="200" height="74" class="card green"/><text x="425" y="656" class="ct">用户管理</text><text x="425" y="682" class="cs">增 / 改 / 删 / 重置密码</text>
+  <rect x="100" y="723" width="200" height="74" class="card green"/><text x="200" y="754" class="ct">角色模型</text><text x="200" y="780" class="cs">admin / operator / user</text>
+  <rect x="325" y="723" width="200" height="74" class="card green"/><text x="425" y="754" class="ct">访问控制</text><text x="425" y="780" class="cs">免鉴权清单 / 401 / 403</text>
+  <rect x="100" y="821" width="425" height="74" class="card green"/><text x="312" y="852" class="ct">系统配置</text><text x="312" y="878" class="cs">Logo 启停与文件 · 健康检查 · 算法包版本</text>
+  <rect x="100" y="919" width="425" height="64" class="card green"/><text x="312" y="958" class="ct">sys_user · sys_config</text>
+
+  <rect x="575" y="560" width="600" height="455" class="section"/>
+  <text x="875" y="600" text-anchor="middle" class="st blueText">推理实例生命周期</text>
+  <rect x="600" y="625" width="170" height="74" class="card blue"/><text x="685" y="656" class="ct">资源预检</text><text x="685" y="682" class="cs">GPU / CPU / 内存</text>
+  <rect x="790" y="625" width="170" height="74" class="card blue"/><text x="875" y="656" class="ct">创建实例</text><text x="875" y="682" class="cs">Deployment + Service</text>
+  <rect x="980" y="625" width="170" height="74" class="card blue"/><text x="1065" y="656" class="ct">实例查询</text><text x="1065" y="682" class="cs">列表 / 详情 / 状态</text>
+  <rect x="600" y="723" width="170" height="74" class="card blue"/><text x="685" y="754" class="ct">停止实例</text><text x="685" y="780" class="cs">副本缩容为 0</text>
+  <rect x="790" y="723" width="170" height="74" class="card blue"/><text x="875" y="754" class="ct">重启实例</text><text x="875" y="780" class="cs">副本恢复 / Pod重建</text>
+  <rect x="980" y="723" width="170" height="74" class="card blue"/><text x="1065" y="754" class="ct">释放实例</text><text x="1065" y="780" class="cs">回收资源与 NodePort</text>
+  <rect x="600" y="821" width="265" height="74" class="card blue"/><text x="732" y="852" class="ct">GPU Profile 适配</text><text x="732" y="878" class="cs">NVIDIA / Huawei Ascend310P</text>
+  <rect x="885" y="821" width="265" height="74" class="card blue"/><text x="1017" y="852" class="ct">创建保护</text><text x="1017" y="878" class="cs">端口避让 / 并发锁 / 审计标记</text>
+  <rect x="600" y="919" width="550" height="64" class="card blue"/><text x="875" y="958" class="ct">deploy_instance · 部署日志 / Pod describe</text>
+
+  <rect x="1200" y="560" width="570" height="455" class="section"/>
+  <text x="1485" y="600" text-anchor="middle" class="st purpleText">资源中心</text>
+  <rect x="1225" y="625" width="160" height="74" class="card purple"/><text x="1305" y="656" class="ct">资源总览</text><text x="1305" y="682" class="cs">CPU / 内存 / 加速卡</text>
+  <rect x="1405" y="625" width="160" height="74" class="card purple"/><text x="1485" y="656" class="ct">节点资源</text><text x="1485" y="682" class="cs">容量 / 分配率</text>
+  <rect x="1585" y="625" width="160" height="74" class="card purple"/><text x="1665" y="656" class="ct">GPU / NPU</text><text x="1665" y="682" class="cs">物理卡 / vGPU</text>
+  <rect x="1225" y="723" width="160" height="74" class="card purple"/><text x="1305" y="754" class="ct">配额查询</text><text x="1305" y="780" class="cs">ResourceQuota</text>
+  <rect x="1405" y="723" width="160" height="74" class="card purple"/><text x="1485" y="754" class="ct">显卡视图</text><text x="1485" y="780" class="cs">型号 / UUID / 指标</text>
+  <rect x="1585" y="723" width="160" height="74" class="card purple"/><text x="1665" y="754" class="ct">资源推荐</text><text x="1665" y="780" class="cs">容量估算 / 余量</text>
+  <rect x="1225" y="821" width="250" height="74" class="card purple"/><text x="1350" y="852" class="ct">趋势查询</text><text x="1350" y="878" class="cs">24h / 7d · 当前快照兜底</text>
+  <rect x="1495" y="821" width="250" height="74" class="card purple"/><text x="1620" y="852" class="ct">单节点单卡趋势</text><text x="1620" y="878" class="cs">显存使用 / 利用率历史</text>
+  <rect x="1225" y="919" width="520" height="64" class="card purple"/><text x="1485" y="958" class="ct">资源汇总 + 快照 + 指标聚合 + 趋势缓存</text>
+
+  <rect x="1795" y="560" width="520" height="455" class="section"/>
+  <text x="2055" y="600" text-anchor="middle" class="st orangeText">Pod 运维与端口</text>
+  <rect x="1820" y="625" width="220" height="74" class="card orange"/><text x="1930" y="656" class="ct">Pod 查询</text><text x="1930" y="682" class="cs">列表 / 详情 / 最近日志</text>
+  <rect x="2065" y="625" width="220" height="74" class="card orange"/><text x="2175" y="656" class="ct">Pod 操作</text><text x="2175" y="682" class="cs">删除 / 重启</text>
+  <rect x="1820" y="723" width="220" height="74" class="card orange"/><text x="1930" y="754" class="ct">端口规则</text><text x="1930" y="780" class="cs">查询 / 新增 / 修改 / 删除</text>
+  <rect x="2065" y="723" width="220" height="74" class="card orange"/><text x="2175" y="754" class="ct">端口快照</text><text x="2175" y="780" class="cs">resolve / 冲突检查</text>
+  <rect x="1820" y="821" width="465" height="74" class="card orange"/><text x="2052" y="852" class="ct">Kubernetes 原生运维通道</text><text x="2052" y="878" class="cs">Pod / Events / Logs / Deployment replicas</text>
+  <rect x="1820" y="919" width="465" height="64" class="card orange"/><text x="2052" y="958" class="ct">port_block_rule</text>
+
+  <rect x="2340" y="560" width="785" height="455" class="section"/>
+  <text x="2732" y="600" text-anchor="middle" class="st redText">告警、日志与审计闭环</text>
+  <rect x="2365" y="625" width="170" height="74" class="card red"/><text x="2450" y="656" class="ct">告警扫描</text><text x="2450" y="682" class="cs">Pod / Event / Node</text>
+  <rect x="2555" y="625" width="170" height="74" class="card red"/><text x="2640" y="656" class="ct">指纹去重</text><text x="2640" y="682" class="cs">累计次数 / 最近发现</text>
+  <rect x="2745" y="625" width="170" height="74" class="card red"/><text x="2830" y="656" class="ct">告警处置</text><text x="2830" y="682" class="cs">解决 / 忽略 / 恢复</text>
+  <rect x="2935" y="625" width="165" height="74" class="card red"/><text x="3017" y="656" class="ct">告警分级</text><text x="3017" y="682" class="cs">高 / 中 / 低</text>
+  <rect x="2365" y="723" width="220" height="74" class="card red"/><text x="2475" y="754" class="ct">操作日志</text><text x="2475" y="780" class="cs">请求 / 响应 / 操作人 / IP</text>
+  <rect x="2605" y="723" width="220" height="74" class="card red"/><text x="2715" y="754" class="ct">实例与 Pod 日志</text><text x="2715" y="780" class="cs">排障文本 / 最近 N 行</text>
+  <rect x="2845" y="723" width="255" height="74" class="card red"/><text x="2972" y="754" class="ct">审计查询与导出</text><text x="2972" y="780" class="cs">分页 / 筛选 / Excel / 统计</text>
+  <rect x="2365" y="821" width="230" height="74" class="card red"/><text x="2480" y="852" class="ct">镜像拉取失败</text><text x="2480" y="878" class="cs">ImagePull / BackOff</text>
+  <rect x="2615" y="821" width="230" height="74" class="card red"/><text x="2730" y="852" class="ct">运行异常</text><text x="2730" y="878" class="cs">Pending / Failed / Unhealthy</text>
+  <rect x="2865" y="821" width="235" height="74" class="card red"/><text x="2982" y="852" class="ct">资源异常</text><text x="2982" y="878" class="cs">GPU / CPU / 内存不足</text>
+  <rect x="2365" y="919" width="735" height="64" class="card red"/><text x="2732" y="958" class="ct">alert_event · operation_log</text>
+
+  <path d="M2670 430 V468" class="arrow"/>
+
+  <!-- 第三层：外部平台与采集 -->
+  <rect x="45" y="1115" width="3110" height="325" class="section"/>
+  <text x="1600" y="1158" text-anchor="middle" class="st cyanText">平台对接、资源采集与运行调度</text>
+
+  <rect x="75" y="1190" width="590" height="205" class="section"/>
+  <text x="370" y="1227" text-anchor="middle" class="st greenText">PaaS平台 API</text>
+  <rect x="100" y="1250" width="160" height="58" class="chip green"/><text x="180" y="1286" class="chipText">集群列表</text>
+  <rect x="280" y="1250" width="160" height="58" class="chip green"/><text x="360" y="1286" class="chipText">资源汇总</text>
+  <rect x="460" y="1250" width="180" height="58" class="chip green"/><text x="550" y="1286" class="chipText">Deployment</text>
+  <rect x="100" y="1323" width="160" height="48" class="chip green"/><text x="180" y="1354" class="chipText">Service</text>
+  <rect x="280" y="1323" width="160" height="48" class="chip green"/><text x="360" y="1354" class="chipText">命名空间</text>
+  <rect x="460" y="1323" width="180" height="48" class="chip green"/><text x="550" y="1354" class="chipText">实例部署 / 回收</text>
+
+  <rect x="690" y="1190" width="760" height="205" class="section"/>
+  <text x="1070" y="1227" text-anchor="middle" class="st blueText">Kubernetes 原生 API</text>
+  <rect x="715" y="1250" width="155" height="58" class="chip blue"/><text x="792" y="1286" class="chipText">Node</text>
+  <rect x="888" y="1250" width="155" height="58" class="chip blue"/><text x="965" y="1286" class="chipText">Pod</text>
+  <rect x="1061" y="1250" width="170" height="58" class="chip blue"/><text x="1146" y="1286" class="chipText">Deployment</text>
+  <rect x="1249" y="1250" width="175" height="58" class="chip blue"/><text x="1336" y="1286" class="chipText">ResourceQuota</text>
+  <rect x="715" y="1323" width="155" height="48" class="chip blue"/><text x="792" y="1354" class="chipText">Events</text>
+  <rect x="888" y="1323" width="155" height="48" class="chip blue"/><text x="965" y="1354" class="chipText">Pod Logs</text>
+  <rect x="1061" y="1323" width="170" height="48" class="chip blue"/><text x="1146" y="1354" class="chipText">副本伸缩</text>
+  <rect x="1249" y="1323" width="175" height="48" class="chip blue"/><text x="1336" y="1354" class="chipText">标签 / 调度状态</text>
+
+  <rect x="1475" y="1190" width="535" height="205" class="section"/>
+  <text x="1742" y="1227" text-anchor="middle" class="st orangeText">Prometheus 指标</text>
+  <rect x="1500" y="1250" width="230" height="58" class="chip orange"/><text x="1615" y="1286" class="chipText">即时查询 / 区间查询</text>
+  <rect x="1750" y="1250" width="235" height="58" class="chip orange"/><text x="1867" y="1286" class="chipText">GPU 显存与利用率</text>
+  <rect x="1500" y="1323" width="230" height="48" class="chip orange"/><text x="1615" y="1354" class="chipText">NVIDIA Exporter</text>
+  <rect x="1750" y="1323" width="235" height="48" class="chip orange"/><text x="1867" y="1354" class="chipText">Ascend 指标适配</text>
+
+  <rect x="2035" y="1190" width="665" height="205" class="section"/>
+  <text x="2367" y="1227" text-anchor="middle" class="st purpleText">后台采集与缓存任务</text>
+  <rect x="2060" y="1250" width="195" height="96" class="card purple"/><text x="2157" y="1283" class="ct">资源快照采集</text><text x="2157" y="1311" class="cs">最小写入间隔</text><text x="2157" y="1335" class="cs">定期清理</text>
+  <rect x="2270" y="1250" width="195" height="96" class="card purple"/><text x="2367" y="1283" class="ct">加速卡指标采样</text><text x="2367" y="1311" class="cs">NVIDIA / Ascend</text><text x="2367" y="1335" class="cs">历史补采</text>
+  <rect x="2480" y="1250" width="195" height="96" class="card purple"/><text x="2577" y="1283" class="ct">趋势缓存刷新</text><text x="2577" y="1311" class="cs">24h / 7d</text><text x="2577" y="1335" class="cs">启动预热</text>
+
+  <rect x="2725" y="1190" width="400" height="205" class="section"/>
+  <text x="2925" y="1227" text-anchor="middle" class="st cyanText">算法包与运行模板</text>
+  <rect x="2750" y="1250" width="350" height="58" class="chip cyan"/><text x="2925" y="1286" class="chipText">NVIDIA x86 / Huawei ARM 算法包</text>
+  <rect x="2750" y="1323" width="350" height="48" class="chip cyan"/><text x="2925" y="1354" class="chipText">只读挂载 / 默认镜像 / 容器端口</text>
+
+  <path d="M875 1065 V1103 H370 V1180" class="arrow"/>
+  <path d="M2055 1065 V1092 H1070 V1180" class="arrow"/>
+  <path d="M1485 1065 V1082 H1742 V1180" class="arrow"/>
+  <path d="M1485 1065 V1076 H2367 V1180" class="arrow"/>
+  <path d="M875 1065 V1098 H2925 V1180" class="arrow"/>
+
+  <!-- 第四层：数据和基础设施 -->
+  <rect x="45" y="1490" width="3110" height="260" class="section"/>
+  <text x="1600" y="1530" text-anchor="middle" class="st purpleText">数据存储、异构算力与部署形态</text>
+
+  <rect x="75" y="1560" width="1060" height="155" class="section"/>
+  <text x="605" y="1594" text-anchor="middle" class="label greenText">MySQL 8.0 · 聚时业务数据</text>
+  <rect x="100" y="1615" width="150" height="54" class="chip green"/><text x="175" y="1648" class="chipText">sys_user</text>
+  <rect x="265" y="1615" width="175" height="54" class="chip green"/><text x="352" y="1648" class="chipText">deploy_instance</text>
+  <rect x="455" y="1615" width="180" height="54" class="chip green"/><text x="545" y="1648" class="chipText">port_block_rule</text>
+  <rect x="650" y="1615" width="175" height="54" class="chip green"/><text x="737" y="1648" class="chipText">operation_log</text>
+  <rect x="840" y="1615" width="170" height="54" class="chip green"/><text x="925" y="1648" class="chipText">alert_event</text>
+  <rect x="100" y="1680" width="205" height="23" class="chip green"/><text x="202" y="1697" class="small" text-anchor="middle">resource_snapshot</text>
+  <rect x="325" y="1680" width="280" height="23" class="chip green"/><text x="465" y="1697" class="small" text-anchor="middle">accelerator_metric_sample</text>
+  <rect x="625" y="1680" width="175" height="23" class="chip green"/><text x="712" y="1697" class="small" text-anchor="middle">sys_config</text>
+  <text x="920" y="1698" class="small">utf8mb4 · JSON 快照 · 指纹唯一索引 · 历史指标索引</text>
+
+  <rect x="1160" y="1560" width="1170" height="155" class="section"/>
+  <text x="1745" y="1594" text-anchor="middle" class="label purpleText">Kubernetes 集群与异构资源池</text>
+  <rect x="1185" y="1615" width="170" height="70" class="card purple"/><text x="1270" y="1644" class="ct">NVIDIA GPU</text><text x="1270" y="1670" class="cs">物理卡</text>
+  <rect x="1370" y="1615" width="170" height="70" class="card purple"/><text x="1455" y="1644" class="ct">NVIDIA vGPU</text><text x="1455" y="1670" class="cs">共享虚拟卡</text>
+  <rect x="1555" y="1615" width="190" height="70" class="card purple"/><text x="1650" y="1644" class="ct">GPU 显存 / 算力</text><text x="1650" y="1670" class="cs">gpumem / gpucores</text>
+  <rect x="1760" y="1615" width="210" height="70" class="card purple"/><text x="1865" y="1644" class="ct">Huawei Ascend310P</text><text x="1865" y="1670" class="cs">NPU 资源</text>
+  <rect x="1985" y="1615" width="155" height="70" class="card purple"/><text x="2062" y="1644" class="ct">CPU / 内存</text><text x="2062" y="1670" class="cs">补充算力</text>
+  <rect x="2155" y="1615" width="150" height="70" class="card purple"/><text x="2230" y="1644" class="ct">NodePort</text><text x="2230" y="1670" class="cs">实例访问</text>
+
+  <rect x="2355" y="1560" width="770" height="155" class="section"/>
+  <text x="2740" y="1594" text-anchor="middle" class="label orangeText">Docker Compose 三容器部署</text>
+  <rect x="2380" y="1615" width="220" height="70" class="card orange"/><text x="2490" y="1644" class="ct">jushi-frontend</text><text x="2490" y="1670" class="cs">Nginx · 对外 18000</text>
+  <rect x="2620" y="1615" width="220" height="70" class="card orange"/><text x="2730" y="1644" class="ct">jushi-api</text><text x="2730" y="1670" class="cs">Flask · 内网 8080</text>
+  <rect x="2860" y="1615" width="240" height="70" class="card orange"/><text x="2980" y="1644" class="ct">jushi-mysql</text><text x="2980" y="1670" class="cs">MySQL 8.0 · 持久卷</text>
+
+  <path d="M2367 1395 V1452 H605 V1550" class="arrow"/>
+  <path d="M1070 1395 V1460 H1745 V1550" class="arrow"/>
+  <path d="M2925 1395 V1470 H2740 V1550" class="arrow"/>
+
+  <text x="55" y="1782" class="small">说明：图中“PaaS平台”为统一产品称谓；未引入消息队列、注册中心、微服务拆分等当前仓库不存在的组件。</text>
+  <text x="3145" y="1782" text-anchor="end" class="small">依据：jushi 后端模块、数据库初始化脚本、Docker Compose 与 Vue 3 管理端现状</text>
+</svg>

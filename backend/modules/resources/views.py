@@ -440,3 +440,4 @@ def cards(query):
         "mapping_rule": "Cards are inferred from node labels and Kubernetes resource snapshots.",
         "note": "Real GPU UUID and runtime usage require device metrics integration.",
     })
+

@@ -39,8 +39,6 @@ CREATE TABLE IF NOT EXISTS port_block_rule (
 
 CREATE TABLE IF NOT EXISTS operation_log (
   id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '操作日志主键 ID',
-  event_id VARCHAR(36) DEFAULT NULL COMMENT '外部审计事件唯一编号，用于重试去重',
-  source VARCHAR(64) NOT NULL DEFAULT 'jushi' COMMENT '审计事件来源',
   operation_type VARCHAR(64) NOT NULL COMMENT '操作类型，如 login、create、release、reset、port_add',
   operator VARCHAR(64) DEFAULT NULL COMMENT '操作人用户名',
   operator_ip VARCHAR(64) DEFAULT NULL COMMENT '操作人 IP 地址',
@@ -52,7 +50,6 @@ CREATE TABLE IF NOT EXISTS operation_log (
   is_success TINYINT(1) NOT NULL DEFAULT 0 COMMENT '操作是否成功：1 成功，0 失败',
   error_message TEXT DEFAULT NULL COMMENT '失败原因或异常信息',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  UNIQUE KEY uk_operation_log_event_id (event_id),
   KEY idx_operation_log_time_type_success (created_at, operation_type, is_success)
 ) COMMENT='操作日志表，用于审计用户关键操作';
 
@@ -156,3 +153,4 @@ ALTER TABLE alert_event
   MODIFY alert_type VARCHAR(64) NULL,
   MODIFY source VARCHAR(64) NULL,
   MODIFY target_name VARCHAR(128) NULL;
+

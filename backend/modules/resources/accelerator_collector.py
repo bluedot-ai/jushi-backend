@@ -361,3 +361,4 @@ def start_accelerator_metric_collector():
         thread.start()
         _collector_started = True
         return True
+

@@ -16,3 +16,4 @@ PREPARE operation_log_statistics_index_statement
   FROM @operation_log_statistics_index_sql;
 EXECUTE operation_log_statistics_index_statement;
 DEALLOCATE PREPARE operation_log_statistics_index_statement;
+

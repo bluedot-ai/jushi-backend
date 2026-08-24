@@ -121,3 +121,4 @@ def _vgpu_per_gpu():
     当前环境 4 张物理卡暴露 40 个 vGPU，所以默认 10。
     """
     return max(_env_int("VGPU_PER_GPU", 10), 1)
+

@@ -599,3 +599,4 @@ def _node_schedulable(node):
     return _node_status(node) == "Ready" and not bool(
         _safe_get(node, "spec", "unschedulable", default=False)
     )
+

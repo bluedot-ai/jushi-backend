@@ -103,3 +103,4 @@ def _apply_prometheus_memory_to_cards(cards, memory_usage):
         "usage_metric_source": PROMETHEUS_METRIC_SOURCE,
     })
     return cards
+

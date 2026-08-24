@@ -39,3 +39,4 @@ def start_resource_snapshot_collector():
         _snapshot_collector_started = True
         return True
 
+
