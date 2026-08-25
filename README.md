@@ -3,8 +3,19 @@
 ## 文档
 
 - [聚时 AI 推理资源管理平台一期开发方案](docs/phase1-development-plan.md)
+- [仓库同步与青海测试环境部署](docs/qinghai-test-deployment.md)
+- [通用服务器部署说明](docs/server-deployment.md)
 - Swagger UI：启动后访问 `http://localhost:8080/api/docs`
 - OpenAPI JSON：启动后访问 `http://localhost:8080/api/docs/openapi.json`
+
+## 当前代码仓库
+
+- 后端源仓库：`boshilin123/jushi`，开发主分支为 `main`。
+- 后端交付仓库：`bluedot-ai/barm-backend`，交付主分支为 `main`。
+- 当前 Vue 3 前端位于相邻项目 `jushiapi-ui-test`，实际开发分支为 `dige/logo`。
+- 前端交付仓库：`bluedot-ai/barm-ui`；其 `main` 与 `dige/logo` 保持同一套交付代码。
+
+真实环境文件只允许进入指定私有交付仓库，禁止提交到公开源仓库。服务器地址、密码、Token 和客户敏感配置不得写入本文档或提交记录。
 
 ## 本地启动
 
