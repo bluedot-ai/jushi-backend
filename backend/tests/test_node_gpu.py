@@ -80,12 +80,17 @@ class NodeGpuTests(unittest.TestCase):
         self.assertEqual(payload["items"][1]["memory_utilization_percent"], 50.0)
         self.assertIsNone(payload["items"][1]["physical_gpu_allocated"])
 
-    def test_trend_preserves_real_time_positions_without_backfill(self):
-        client = _FakeClient()
-        with patch.object(node_gpu, "_client", return_value=(client, None)):
+    def test_memory_trend_preserves_real_time_positions_without_backfill(self):
+        # The current single-card contract reads memory history from MySQL,
+        # not the removed Prometheus gpu_utilization range-query endpoint.
+        rows = [
+            {"vendor": "nvidia", "card_id": "gpu-a", "bucket_no": 94, "utilization_avg": 5},
+            {"vendor": "nvidia", "card_id": "gpu-a", "bucket_no": 95, "utilization_avg": 20},
+        ]
+        with patch.object(node_gpu, "load_accelerator_trend_buckets", return_value={"items": rows, "raw_sample_count": 2}) as load:
             payload = node_gpu.node_gpu_trend(
                 "worker-1",
-                "gpu_utilization",
+                "memory_utilization",
                 "24h",
                 {"node_name": "worker-1"},
                 now_seconds=100000,
@@ -94,12 +99,14 @@ class NodeGpuTests(unittest.TestCase):
         self.assertTrue(payload["is_success"])
         self.assertEqual(payload["start_timestamp"], (100000 - 86400) * 1000)
         self.assertEqual(payload["end_timestamp"], 100000 * 1000)
-        self.assertEqual(payload["step_seconds"], 300)
-        self.assertEqual(payload["series"][0]["points"], [
-            [(100000 - 300) * 1000, 5.0],
-            [100000 * 1000, 20.0],
+        self.assertEqual(payload["step_seconds"], 900)
+        self.assertEqual(len(payload["series"][0]["points"]), 96)
+        self.assertTrue(all(point[1] is None for point in payload["series"][0]["points"][:94]))
+        self.assertEqual(payload["series"][0]["points"][-2:], [
+            [(100000 - 1800) * 1000, 5.0],
+            [(100000 - 900) * 1000, 20.0],
         ])
-        self.assertEqual(client.range_calls[0][3], 300)
+        self.assertEqual(load.call_args.args[-1], 900)
 
     def test_not_ready_node_is_rejected_before_prometheus_query(self):
         with patch.object(service, "nodes", return_value={
@@ -125,4 +132,3 @@ class NodeGpuTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

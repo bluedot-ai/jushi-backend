@@ -1274,6 +1274,8 @@ GET /api/resources/gpus
 
 当前状态：后端已实现。按 NVIDIA GPU、NVIDIA vGPU、显存、算力以及 Huawei Ascend310P 等资源名汇总可用量、已用量和展示字段。
 
+`category_items` 的型号数量按 Prometheus 单卡设备标签聚合，不再将一个节点的型号复制给该节点的全部显卡。NVIDIA 使用 UUID、`gpu`、`modelName`，华为使用 `vdie_id`（或 PCI 地址）、`id`、`model_name`。监控未覆盖的资源数量保留为 `Unknown` 型号，不凭节点标签猜测；前端显示“未识别型号”。`diagnostics.card_inventory` 提供查询失败、身份缺失、元数据冲突及节点数量不一致诊断。该设备视图不作为历史分配率的校验替代，也不绕过虚拟资源检查。
+
 响应：
 
 ```json
@@ -1321,6 +1323,10 @@ GET /api/resources/cards
 
 当前状态：后端已实现。用于资源中心卡片或表格展示，数据来自 PaaS/Kubernetes 资源汇总和节点信息。
 
+逐卡身份和型号读取 Prometheus（NVIDIA DCGM / 华为 NPU Exporter），保持原字段结构并新增 `vendor`、`device_index`（原始零基序号）、`device_name`、`model_source`。`card_id` 优先为 NVIDIA UUID 或华为 `vdie_id`，华为无 UUID 时使用 PCI 地址；按节点、厂商及稳定设备标识去重，不按返回顺序套用型号。缺失监控保留 `节点-unidentified-序号` 占位、`gpu_model=Unknown`、`device_index=null`、`is_real_physical_card=false`，不能将占位当成真实显卡 UUID。
+
+“已识别”只表示已获取显卡身份，不代表“运行中”或“已分配”。无法从节点申请总量确定哪一个 UUID 被分配时，逐卡分配值及已用显存返回 `null`；节点推导的容量仍保留估算标记，不宣称真实单卡用量。查询不写入数据库，也不需要新增表、环境变量或依赖。仅更新前端不能修复型号来源，离线发布时需要同时更新后端镜像。
+
 ### 7.6 资源趋势
 
 ```http
@@ -1336,6 +1342,50 @@ GET /api/resources/recommendation
 ```
 
 当前状态：后端已实现。根据当前 GPU、vGPU、显存、算力和节点压力返回资源使用建议。
+
+### 7.8 物理 GPU / 华为 NPU 历史回看与自然月对比
+
+新增独立的 `gpu_allocation_snapshot` 表，默认每 5 分钟分别保存 `all`（全部）、`nvidia`（NVIDIA GPU）、`ascend`（华为 Ascend NPU）的集群级历史快照，保存**当前月及前六个完整自然月**。旧的 `resource_snapshot` 和 `accelerator_metric_sample` 保持原有用途；不得用单卡显存历史反推历史分配数量。统一接口保留 `gpu_*` 字段名称兼容已有前端，华为范围对应 NPU 设备指标；全部范围为设备数量统计，不代表异构设备等效算力。
+
+```http
+GET  /api/resources/gpu-allocation/current
+GET  /api/resources/gpu-allocation/trend
+GET  /api/resources/gpu-allocation/compare
+POST /api/internal/gpu-allocation/collect
+```
+
+前三个接口需要登录。`current` 仅查询，不写入数据库；`collect` 需要管理员角色，客户端不能上传指标或任意采样时间。后台任务直接调用采集函数，不依赖登录或浏览器。
+
+统一响应包含 `is_success`、`msg` 和 `data`。参数错误返回 HTTP 400；未登录返回 401；非管理员手动采集返回 403；数据库或迁移未就绪返回 503。
+
+三个查询接口均支持 `vendor=all|nvidia|ascend`，默认 `all`。`current.data` 包括 `vendor`、`vendors`（各厂商快照）、`gpu_capacity`（所选范围的纳管物理设备总数）、`gpu_allocatable`（Ready 且可调度节点上的可分配数量）、`gpu_allocated`（同一批节点的已分配数量）、`allocation_rate`、`gpu_utilization_avg`、`gpu_memory_utilization`、`sampled_at` 及 `diagnostics`。资源分配率不是计算利用率；真实监控缺失或不完整时返回 `null`，不能以分配比例估算。NVIDIA 采集 DCGM 指标，华为采集 NPU Exporter 指标；全部利用率按物理设备数加权，显存按统一字节单位的真实容量加权。任一实际存在厂商的某项监控不完整，全部范围对应指标为空，不能用另一厂商代替全体。
+
+监控以原始五分钟窗口的真实抓取时间校验。同一物理设备、同一 `instance/job` 且其他设备和采集源标签一致时，仅 `exported_pod/exported_namespace/exported_container` 变化的片段可合并；重叠同值点去重，冲突值、多源不同时间、内部长缺口或缺失采集源身份仍拒绝，不能靠合并多采集源伪造完整率。`diagnostics.monitor_coverage.memory_total.physical_inventory_valid` 表示总显存指标中的新鲜整卡身份是否覆盖全部纳管设备。该核验独立于五分钟窗口完整性，可用于 NVIDIA 陈旧 `gpu.count` 标签与整卡 Capacity 的数量核验；窗口不足时利用率仍为空。华为切分资源项在 Capacity/Allocatable 两侧均为零或未声明时不视为已启用切分；任一侧非零、数值非法或共享标签启用仍拒绝整卡统计。NotReady 节点仍计入纳管容量，但不计入可分配/已分配数量；其监控缺失仍会影响所选范围的全量利用率。
+
+`trend` 参数：`start=YYYY-MM-DD`（包含）、`end=YYYY-MM-DD`（不包含）、`granularity=day|hour`、`timezone=Asia/Shanghai`。查询范围必须在保留范围内；当前月只统计已经过去的时间，返回 `data.items` 的时间桶，缺失指标为 `null`。
+
+当前展示与历史统计隔离：`current` 新增 `observed_monitor`（`mode=latest_observation`，`lookback_seconds=300`），复用上述原始窗口中的每卡最后一个有效点，不增加 Prometheus 查询，不安装或修改客户时间服务。原 `gpu_utilization_avg` / `gpu_memory_utilization` 继续表示严格五分钟统计；只有这些正式字段进入 `gpu_allocation_snapshot`，最近观测不入库、不参与历史趋势或月份对比。`sampled_at` 为查询时间，不能拿它替代原始指标时间。节点单卡趋势继续使用已有采集表，缺失点断线显示，不以最近观测补造历史。
+
+`observed_monitor.utilization` 与 `.memory` 分别提供 `value`、`expected_cards`、`observed_cards`、`fresh_cards`、`delayed_cards`、`missing_cards`、`status`、`oldest_sample_at`、`latest_sample_at`、`maximum_age_seconds`、`nodes` 和 `issues`。状态为 `complete`、`partial`、`delayed`、`partial_delayed`、`unavailable` 或 `no_devices`；`complete` 仅表示最近观测覆盖完整，不表示五分钟历史有效。超过两倍对应厂商抓取间隔的样本标记延迟，窗口外或未来样本拒绝；保留原始时间，不补偿节点时钟。未确认的整卡身份、虚拟卡、超出节点物理数量、多源冲突、非法数值仍拒绝。显存只统计身份及采集源匹配、采样时间差不超过两倍抓取间隔的 used/total 对；利用率按参与观测的卡数平均，显存按统一字节单位加权。纳管数量未知时 `expected_cards` / `missing_cards` 为 `null`，不能视为零。
+
+前端优先展示正式五分钟值；该项为空但最近观测有值时，标题改为“最近观测”，注明覆盖数量、原始时间范围、最大延迟及缺失/不可用节点，不宣称代表全部纳管显卡。无可展示样本时显示具体原因，不填零。全部范围可以展示明确标注的已观测子集，但绝不能将它写进全部范围的正式统计。此变更无新增表、数据库字段、依赖或必填环境变量。
+
+`compare` 参数：`base_month=YYYY-MM`、`compare_month=YYYY-MM`、`timezone=Asia/Shanghai`。返回 `data.base`、`data.comparison` 和 `data.changes`。月度字段：
+
+| 字段 | 含义 |
+| --- | --- |
+| `gpu_capacity_avg` / `gpu_allocatable_avg` / `gpu_allocated_avg` | 按有效时间加权的平均容量、可分配及已分配卡数 |
+| `allocation_rate_avg` | 已分配卡时 / 可分配卡时 × 100%，不是直接平均百分比 |
+| `allocation_rate_max` | 有效采样峰值分配率 |
+| `gpu_card_hours` | 已分配 GPU 卡时，单位 GPU·h，不跨长时间缺口推算 |
+| `gpu_utilization_avg` / `gpu_memory_utilization` | 真实监控窗口值的时间加权平均 |
+| `allocation_completeness` / `utilization_completeness` / `memory_completeness` | 三类数据分别计算完整率 |
+| `partial_month` | 是否为尚未结束的当前月 |
+| `status` | `ok`、`no_data`、`mixed_version` 或 `unsupported_version` |
+
+`changes` 的 `absolute` 在百分比指标中表示百分点（pp），`percentage` 表示相对变化百分比，基准为 0 时相对变化为空。`comparison_compatible=false` 时不输出变化，前端也不得自行补算。新口径为 `physical-accelerator-v2`；旧 `physical-gpu-v1` 快照保留为 `vendor=nvidia`，不混入新的 `all` 范围，跨新旧版本不能直接比较。混合或未知计算口径不输出可误导的数值对比。首次上线不能凭空生成之前月份的分配历史。
+
+部署与增量 SQL 见 [GPU x86 离线升级说明](gpu-allocation-offline-upgrade.md)。
 
 ## 8. Pod 运维接口
 

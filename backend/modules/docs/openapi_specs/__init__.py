@@ -4,6 +4,7 @@ from .auth import AUTH_PATHS
 from .cluster import CLUSTER_PATHS
 from .components import COMPONENTS
 from .deploy import DEPLOY_PATHS
+from .gpu_allocation import GPU_ALLOCATION_PATHS
 from .logs import LOG_PATHS
 from .pods import POD_PATHS
 from .ports import PORT_PATHS
@@ -37,6 +38,7 @@ def build_openapi_spec() -> dict:
         DEPLOY_PATHS,
         PORT_PATHS,
         RESOURCE_PATHS,
+        GPU_ALLOCATION_PATHS,
         POD_PATHS,
         ALERT_PATHS,
         AUDIT_PATHS,

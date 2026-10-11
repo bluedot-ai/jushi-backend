@@ -77,7 +77,7 @@ RESOURCE_PATHS = {
         "get": {
             "tags": ["Resources"],
             "summary": "GPU / vGPU 资源统计",
-            "description": "按资源类型和显卡型号统计资源总量、已用量和可用量。",
+            "description": "按资源类型统计总量、已用量和可用量；category_items 按 Prometheus 逐卡型号聚合，混合型号节点不套用节点标签，未识别型号返回 Unknown。diagnostics.card_inventory 给出监控查询和识别完整性诊断。",
             "responses": {"200": {"description": "GPU 统计"}},
         }
     },
@@ -93,7 +93,7 @@ RESOURCE_PATHS = {
         "get": {
             "tags": ["Resources"],
             "summary": "资源卡片列表",
-            "description": "查询显卡 / vGPU 卡片列表，用于资源中心卡片表格。",
+            "description": "查询显卡列表。逐卡 card_id、vendor、device_index（exporter 原始零基序号）、device_name、gpu_model 来自 Prometheus 设备标签。监控缺失保留未识别占位，is_real_physical_card=false，不套用节点型号。已识别不表示已分配，无法绑定具体 UUID 的分配状态和已用显存返回 null，节点推导容量仍保留估算标记。新增 model_source 和 diagnostics.card_inventory；接口鉴权及原字段结构保持兼容。",
             "responses": {"200": {"description": "资源卡片列表"}},
         }
     },
@@ -127,4 +127,3 @@ RESOURCE_PATHS = {
         }
     },
 }
-

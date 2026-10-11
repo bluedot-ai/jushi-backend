@@ -1,0 +1,4 @@
+# Development only: use the verified x86 image without rebuilding or touching MySQL.
+services:
+  jushi-api:
+    image: jushi-jushi-api:amd64

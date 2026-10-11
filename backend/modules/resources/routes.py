@@ -49,7 +49,7 @@ def quotas():
 
 @resources_bp.get("/cards")
 def cards():
-    # 显卡 / vGPU 卡片列表：当前是根据节点资源推导出来的卡片视图，不是真实 GPU UUID。
+    # 显卡列表：逐卡身份和型号读取 exporter，未识别卡保留明确占位。
     return jsonify(service.cards(normalize_resource_query(request.args)))
 
 
@@ -63,4 +63,3 @@ def trend():
 def recommendation():
     # 首页资源推荐策略：根据节点资源分配率给出推荐节点和风险提示，不直接参与调度。
     return jsonify(service.recommendation(normalize_resource_query(request.args)))
-

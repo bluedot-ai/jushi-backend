@@ -22,6 +22,8 @@ try:
     from backend.modules.pods import pods_bp
     from backend.modules.ports import ports_bp
     from backend.modules.resources import resources_bp
+    from backend.modules.resources.gpu_allocation_collector import start_gpu_allocation_collector
+    from backend.modules.resources.gpu_allocation_routes import gpu_allocation_bp, gpu_allocation_internal_bp
     from backend.modules.resources.service import (
         start_accelerator_metric_collector,
         start_resource_snapshot_collector,
@@ -44,6 +46,8 @@ except ModuleNotFoundError:
     from modules.pods import pods_bp
     from modules.ports import ports_bp
     from modules.resources import resources_bp
+    from modules.resources.gpu_allocation_collector import start_gpu_allocation_collector
+    from modules.resources.gpu_allocation_routes import gpu_allocation_bp, gpu_allocation_internal_bp
     from modules.resources.service import (
         start_accelerator_metric_collector,
         start_resource_snapshot_collector,
@@ -208,6 +212,8 @@ def create_app() -> Flask:
     app.register_blueprint(deploy_bp, url_prefix="/api/deploy")
     app.register_blueprint(ports_bp, url_prefix="/api/port-list")
     app.register_blueprint(resources_bp, url_prefix="/api/resources")
+    app.register_blueprint(gpu_allocation_bp, url_prefix="/api/resources/gpu-allocation")
+    app.register_blueprint(gpu_allocation_internal_bp, url_prefix="/api/internal/gpu-allocation")
     app.register_blueprint(pods_bp, url_prefix="/api/pods")
     app.register_blueprint(alerts_bp, url_prefix="/api/alerts")
     app.register_blueprint(logs_bp, url_prefix="/api/logs")
@@ -223,6 +229,8 @@ def create_app() -> Flask:
         print("[Jushi] Resource trend cache refresher: started")
     if start_accelerator_metric_collector():
         print("[Jushi] Accelerator history collector: started")
+    if start_gpu_allocation_collector():
+        print("[Jushi] GPU allocation history collector: started")
 
     return app
 
@@ -233,4 +241,3 @@ app = create_app()
 if __name__ == "__main__":
     debug_enabled = os.getenv("FLASK_DEBUG", "").lower() in {"1", "true", "yes", "on"}
     app.run(host="0.0.0.0", port=8080, debug=debug_enabled, use_reloader=False)
-

@@ -7,7 +7,8 @@ except ModuleNotFoundError:
 
 from .aggregator import _apply_node_level_card_totals, _node_card_rows, _resource_summary_cards
 from .collector import _resource_context
-from .constants import GPU_RESOURCE_META, METRIC_SOURCE, PHYSICAL_GPU_KEYS, UNKNOWN_GPU_MODEL
+from .card_inventory import card_inventory
+from .constants import GPU_RESOURCE_META, METRIC_SOURCE, UNKNOWN_GPU_MODEL
 from .parser import (
     _estimated_card_count,
     _extract_gpu_model,
@@ -15,18 +16,15 @@ from .parser import (
     _health_level,
     _health_text,
     _mib_to_gib,
-    _node_allocatable,
     _node_gpu_memory_mib_per_card,
     _node_gpu_mode,
     _node_gpu_vendor,
-    _node_name,
     _node_schedulable,
     _node_status,
     _node_vgpu_per_gpu,
     _percent,
     _resource_get,
     _split_value,
-    _sum_resources,
 )
 from .repository import _save_resource_snapshot
 from .response import _ok
@@ -258,29 +256,17 @@ def gpus(query):
             "usage_metric_ready": False,
         })
 
+    node_rows = _node_card_rows(context)
+    top_nodes_result = _nodes_from_context(context, query, node_rows)
+    node_items = top_nodes_result.get("items", []) if top_nodes_result.get("is_success") else []
+    inventory, inventory_diagnostics = card_inventory(node_items)
     model_map = {}
-    unknown_nodes = []
-
-    for node in context["raw_nodes"]:
-        model = _extract_gpu_model(node)
-        allocatable = _node_allocatable(node)
-
-        count = _sum_resources(allocatable, PHYSICAL_GPU_KEYS)
-
-        # 如果节点没有返回物理卡数量，但返回了 vGPU 数量，则按 VGPU_PER_GPU 估算物理卡数量。
-        if count <= 0:
-            count = _estimated_card_count(
-                0,
-                _resource_get(allocatable, "nvidia.com/vgpu"),
-            )
-
-        if count <= 0:
-            continue
-
-        model_map[model] = model_map.get(model, 0) + count
-
+    unknown_nodes = set()
+    for item in inventory:
+        model = item["gpu_model"]
+        model_map[model] = model_map.get(model, 0) + 1
         if model == UNKNOWN_GPU_MODEL:
-            unknown_nodes.append(_node_name(node))
+            unknown_nodes.add(item["node_name"])
 
     category_items = [
         {"model": model, "count": count}
@@ -288,9 +274,7 @@ def gpus(query):
     ]
     category_items.sort(key=lambda item: item["count"], reverse=True)
 
-    node_rows = _node_card_rows(context)
-    top_nodes_result = _nodes_from_context(context, query, node_rows)
-    top_nodes = top_nodes_result.get("items", [])[:5] if top_nodes_result.get("is_success") else []
+    top_nodes = node_items[:5]
 
     return _ok({
         "collected_at": context["collected_at"],
@@ -298,14 +282,13 @@ def gpus(query):
         "resources": resources,
         "category_items": category_items,
         "top_nodes": top_nodes,
-        "unknown_model_nodes": unknown_nodes,
+        "unknown_model_nodes": sorted(unknown_nodes),
         "model_map_configured": bool(_gpu_model_node_map()),
-        "diagnostics": context["diagnostics"],
+        "diagnostics": {**context["diagnostics"], "card_inventory": inventory_diagnostics},
     })
 
 def cards(query):
-    # 显卡卡片视图：根据节点资源推导“每张卡”的展示行。
-    # 当前没有真实 GPU UUID，因此 card_id 是 node_name + 序号；真实卡级指标需要后续接 exporter。
+    # 保留旧字段结构；逐卡身份/型号来自 exporter，缺失时不可套用节点型号。
     context, err = _resource_context(query)
     if err:
         return err
@@ -433,11 +416,32 @@ def cards(query):
                 "capacity_estimation_source": node.get("capacity_estimation_source"),
             })
 
-    return _ok({
-        "items": card_items,
-        "total": len(card_items),
-        "metric_source": METRIC_SOURCE,
-        "mapping_rule": "Cards are inferred from node labels and Kubernetes resource snapshots.",
-        "note": "Real GPU UUID and runtime usage require device metrics integration.",
-    })
+    inventory, inventory_diagnostics = card_inventory(node_items)
+    templates = {item["node_name"]: item for item in card_items}
+    identified_items = []
+    for identity in inventory:
+        template = templates.get(identity["node_name"])
+        if not template:
+            continue
+        item = {**template, **identity,
+                "card_status": "已识别" if identity["is_real_physical_card"] else "未识别",
+                "data_precision": "prometheus_device_identity" if identity["is_real_physical_card"] else "unidentified",
+                "mapping_rule": "Matched by node, vendor and stable device identity; allocation is not inferred per card."}
+        # Kubernetes exposes node-level requests, not which UUID was assigned.
+        # Never attach an arbitrary allocated/idle state to an exporter UUID.
+        item["physical_gpu"] = {"allocated": None, "total": 1, "percent": None}
+        item["vgpu"] = {**template["vgpu"], "allocated": None, "percent": None}
+        item["gpu_core"] = {**template["gpu_core"], "allocated": None, "percent": None}
+        item["gpu_memory"] = {**template["gpu_memory"], "allocated_gib": None, "percent": None,
+                              "capacity_estimated": True}
+        item["metric_source"] = "prometheus_device_labels + node_resource_capacity_estimate"
+        identified_items.append(item)
 
+    return _ok({
+        "items": identified_items,
+        "total": len(identified_items),
+        "metric_source": METRIC_SOURCE,
+        "mapping_rule": "Device identity and model come from Prometheus; missing models remain unknown.",
+        "note": "Card allocation and used memory are unavailable here; node-derived capacities remain estimates.",
+        "diagnostics": {"card_inventory": inventory_diagnostics},
+    })
